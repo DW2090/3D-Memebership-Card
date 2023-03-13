@@ -2,12 +2,12 @@ import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-// import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 
-function GLBViewer({ src, frontText, backText }) {
+function GLBViewer({ src, frontText, backText, qrCodeValue }) {
     const containerRef = useRef(null);
     const canvasRef = useRef(null);
 
@@ -91,38 +91,41 @@ function GLBViewer({ src, frontText, backText }) {
 
             // load qr code svg resource;
             loader.load(
-                '/models/qr1.svg', function (data) {
+                `http://localhost:4000/api/qrcode/${qrCodeValue}`, function (data) {
+                    console.log({ data })
                     const paths = data.paths;
 
                     const qrGroup1 = new THREE.Group();
 
                     for (let i = 0; i < paths.length; i++) {
-
+                        // if()
                         const path = paths[i];
+                        if (path.userData.node.nodeName === 'path') {
+                            const shapes = SVGLoader.createShapes(path);
 
-                        const shapes = SVGLoader.createShapes(path);
+                            for (let j = 0; j < shapes.length; j++) {
 
-                        for (let j = 0; j < shapes.length; j++) {
+                                const shape = shapes[j];
+                                // const geometry = new THREE.ShapeGeometry(shape);
+                                const geometry = new THREE.ExtrudeGeometry(shape, {
+                                    depth: 20,
+                                    bevelEnabled: false
+                                })
+                                const mesh = new THREE.Mesh(geometry, textMaterial);
+                                mesh.scale.set(0.05, 0.05, 0.05)
+                                // // let measure = new THREE.Vector3();
+                                // // const box = mesh.getSize(measure);
+                                // // console.log(measure)
+                                mesh.rotation.x = Math.PI
 
-                            const shape = shapes[j];
-                            // const geometry = new THREE.ShapeGeometry(shape);
-                            const geometry = new THREE.ExtrudeGeometry(shape, {
-                                depth: 20,
-                                bevelEnabled: false
-                            })
-                            const mesh = new THREE.Mesh(geometry, textMaterial);
-                            mesh.scale.set(0.03, 0.03, 0.02)
-                            // let measure = new THREE.Vector3();
-                            // const box = mesh.getSize(measure);
-                            // console.log(measure)
-                            mesh.position.z = 1.7
-                            mesh.position.x = 13
-                            mesh.position.y = -45
-                            // mesh.name = 'qr-1'
-                            qrGroup1.add(mesh);
-                            qrGroup1.name = 'qr-1' 
+                                mesh.position.z = 2.2
+                                mesh.position.x = 18
+                                mesh.position.y = -30
+                                mesh.name = 'qr-1'
+                                qrGroup1.add(mesh);
+                                qrGroup1.name = 'qr-1'
+                            }
                         }
-
                     }
 
                     // scene.add(group);
@@ -132,9 +135,9 @@ function GLBViewer({ src, frontText, backText }) {
 
             // load qr code svg resource;
             loader.load(
-                '/models/qr2.svg', function (data) {
+                '/models/qr2-1.svg', function (data) {
                     const paths = data.paths;
-
+                    console.log({ data })
                     const qrGroup1 = new THREE.Group();
 
                     for (let i = 0; i < paths.length; i++) {
@@ -146,19 +149,17 @@ function GLBViewer({ src, frontText, backText }) {
                         for (let j = 0; j < shapes.length; j++) {
 
                             const shape = shapes[j];
-                            // const geometry = new THREE.ShapeGeometry(shape);
+                            
                             const geometry = new THREE.ExtrudeGeometry(shape, {
                                 depth: 20,
                                 bevelEnabled: false
                             })
                             const mesh = new THREE.Mesh(geometry, textMaterial);
                             mesh.scale.set(0.03, 0.03, 0.02)
-                            // Reverse object to show back side
-                            // mesh.rotation.x = Math.PI
-                            // mesh.rotation.y = Math.PI * 2
+
                             mesh.rotation.z = Math.PI
 
-                            mesh.position.z = -2.1
+                            mesh.position.z = -2.2
                             mesh.position.x = -12
                             mesh.position.y = -29
 
@@ -170,6 +171,49 @@ function GLBViewer({ src, frontText, backText }) {
 
                     // scene.add(group);
                     group.add(qrGroup1)
+                }
+            )
+
+            // load qr code svg resource;
+            loader.load(
+                `http://localhost:4000/api/qrcode/${qrCodeValue}`, function (data) {
+                    console.log({ data })
+                    const paths = data.paths;
+
+                    const qrGroup = new THREE.Group();
+
+                    for (let i = 0; i < paths.length; i++) {
+                        // if()
+                        const path = paths[i];
+                        if (path.userData.node.nodeName === 'path') {
+                            const shapes = SVGLoader.createShapes(path);
+
+                            for (let j = 0; j < shapes.length; j++) {
+
+                                const shape = shapes[j];
+                                // const geometry = new THREE.ShapeGeometry(shape);
+                                const geometry = new THREE.ExtrudeGeometry(shape, {
+                                    depth: 20,
+                                    bevelEnabled: false
+                                })
+                                const mesh = new THREE.Mesh(geometry, textMaterial);
+                                mesh.scale.set(0.05, 0.05, 0.05)
+                                // // let measure = new THREE.Vector3();
+                                // // const box = mesh.getSize(measure);
+                                // // console.log(measure)
+                                mesh.rotation.z = Math.PI
+
+                                mesh.position.z = -2.2
+                                mesh.position.x = -14.25
+                                mesh.position.y = -30
+                                mesh.name = 'qr-3'
+                                qrGroup.add(mesh);
+                            }
+                        }
+                    }
+
+                    // scene.add(group);
+                    group.add(qrGroup)
                 }
             )
         }
@@ -184,7 +228,7 @@ function GLBViewer({ src, frontText, backText }) {
                     font: font,
 
                     size: 2,
-                    height: 2,
+                    height: 2.1,
 
                     bevelThickness: 2,
 
@@ -206,7 +250,7 @@ function GLBViewer({ src, frontText, backText }) {
                     font: font,
 
                     size: 2,
-                    height: 2,
+                    height: 2.1,
 
                     bevelThickness: 2,
 
@@ -232,7 +276,7 @@ function GLBViewer({ src, frontText, backText }) {
 
         function animate() {
             requestAnimationFrame(() => animate());
-            group.rotateY(0.01)
+            // group.rotateY(0.01)
 
             renderer.render(scene, camera)
         }
@@ -249,7 +293,7 @@ function GLBViewer({ src, frontText, backText }) {
         camera.position.z = 5;
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-        // const control = new OrbitControls(camera, containerRef.current)
+        new OrbitControls(camera, containerRef.current)
 
         // Clean up Three.js objects on unmount
         return () => {
@@ -257,7 +301,7 @@ function GLBViewer({ src, frontText, backText }) {
             //   loader.dispose();
             //   scene.dispose();
         };
-    }, [src, frontText, backText]);
+    }, [src, frontText, backText, qrCodeValue]);
 
     return (
         <div ref={containerRef} style={{ width: '100vw', height: '100vh' }}>

@@ -42,7 +42,7 @@ function GLBViewer({ src, frontText, backText, qrCodeValue }) {
             30,
             5000
         );
-        camera.position.set(-300, 0, 200);
+        camera.position.set(300, 0, 200);
 
         const videoRef = document.getElementById('video');
         videoRef.src = 'models/lighting.mp4';
@@ -79,6 +79,7 @@ function GLBViewer({ src, frontText, backText, qrCodeValue }) {
             model.position.set(-vector.x, -vector.y, -vector.z)
             group = new THREE.Group();
             scene.add(group);
+            // group.rotation.y = Math.PI / 2
             group.add(model)
             animate(model)
 
@@ -149,7 +150,7 @@ function GLBViewer({ src, frontText, backText, qrCodeValue }) {
                         for (let j = 0; j < shapes.length; j++) {
 
                             const shape = shapes[j];
-                            
+
                             const geometry = new THREE.ExtrudeGeometry(shape, {
                                 depth: 20,
                                 bevelEnabled: false
@@ -276,7 +277,7 @@ function GLBViewer({ src, frontText, backText, qrCodeValue }) {
 
         function animate() {
             requestAnimationFrame(() => animate());
-            // group.rotateY(0.01)
+            group.rotateY(0.01)
 
             renderer.render(scene, camera)
         }

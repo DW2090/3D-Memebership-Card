@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
@@ -8,14 +8,20 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 import { InteractionManager } from 'three.interactive';
 
-function GLBViewer({ src, frontText, backText, qrCodeValue }) {
+function GLBViewer({ src, frontTexts, backTexts, qrCodeValue }) {
     const containerRef = useRef(null);
     const canvasRef = useRef(null);
-    var photoMesh
+    const [imageUrl, setImageUrl] = useState("sprite.jpg")
+
+    const handleClick = () => {
+        //ToDo: redirect token page
+        alert("Redirect to the token page!")
+    }
+
     useEffect(() => {
         if (!src) return;
 
-        let group, textMesh1, textMesh2, textMaterial;
+        let group, frontTextMesh, frontTextMesh1, frontTextMesh2, frontTextMesh3, frontTextMesh4, backTextMesh, backTextMesh1, backTextMesh2, backTextMesh3, textMaterial;
 
         // Create a new Three.js renderer and attach it to the canvas element
         const renderer = new THREE.WebGLRenderer({
@@ -67,21 +73,19 @@ function GLBViewer({ src, frontText, backText, qrCodeValue }) {
         loader.load(src, (gltf) => {
             // Add the loaded model to the scene
             // const parrotPosition = new THREE.Vector3(0, 0, 0);
-            var allMesh;
             gltf.parser.getDependencies('mesh').then((mesh) => {
-                allMesh = mesh
                 console.log(mesh.map(item => item.name))
                 mesh.find(item => item.name === "video_back001").material = material
                 mesh.find(item => item.name === "video_front001").material = material
                 // material.opa
                 textMaterial = mesh.find(item => item.name === "qr001").material.clone();
 
-                mesh.find(item => item.name == 'text001').visible = false;
+                mesh.find(item => item.name === 'text001').visible = false;
                 // change avatar from a image
-                var map = new THREE.TextureLoader().load("sprite.jpg");
+                var map = new THREE.TextureLoader().load(imageUrl);
                 var mapMaterial = new THREE.MeshBasicMaterial({ map: map });
                 // find photo mesh
-                photoMesh = mesh.find(item => item.name === "photo001")
+                const photoMesh = mesh.find(item => item.name === "photo001")
 
                 mapMaterial.transparent = false;
                 mapMaterial.blending = THREE.NormalBlending
@@ -95,7 +99,9 @@ function GLBViewer({ src, frontText, backText, qrCodeValue }) {
 
                 interactionManager.add(logoMesh);
 
-                logoMesh.addEventListener('mousedown', (event) => { alert('test') })
+                logoMesh.addEventListener('mousedown', () => {
+                    handleClick();
+                })
                 // window.removeEventListener('click', onDocumentMouseDown, false)
             })
 
@@ -110,7 +116,7 @@ function GLBViewer({ src, frontText, backText, qrCodeValue }) {
             group = new THREE.Group();
             scene.add(group);
             // interactionManager.update();
-            // group.rotation.y = Math.PI / 2
+            group.rotation.y = Math.PI / 2
             group.add(model)
             animate(model)
 
@@ -123,9 +129,8 @@ function GLBViewer({ src, frontText, backText, qrCodeValue }) {
 
             // load qr code svg resource;
             loader.load(
-                // `http://localhost:4000/api/qrcode/${qrCodeValue}`, function (data) {
-                `/models/qr1.svg`, function (data) {
-                    console.log({ data })
+                `http://localhost:4000/api/qrcode/${qrCodeValue}`, function (data) {
+                    // `/models/qr1.svg`, function (data) {
                     const paths = data.paths;
 
                     const qrGroup1 = new THREE.Group();
@@ -252,15 +257,22 @@ function GLBViewer({ src, frontText, backText, qrCodeValue }) {
         }
 
         function createText() {
-            group.remove(textMesh1)
-            group.remove(textMesh2)
+            group.remove(frontTextMesh)
+            group.remove(frontTextMesh1)
+            group.remove(frontTextMesh2)
+            group.remove(frontTextMesh3)
+            group.remove(frontTextMesh4)
+            group.remove(backTextMesh)
+            group.remove(backTextMesh1)
+            group.remove(backTextMesh2)
+            group.remove(backTextMesh3)
             const loader = new FontLoader();
             loader.load('fonts/optimer_bold.typeface.json', function (font) {
-                let textGeo = new TextGeometry(frontText, {
+                let textGeo = new TextGeometry(frontTexts.first, {
 
                     font: font,
 
-                    size: 2,
+                    size: 1.8,
                     height: 2.1,
 
                     bevelThickness: 2,
@@ -268,21 +280,97 @@ function GLBViewer({ src, frontText, backText, qrCodeValue }) {
                 });
 
                 // Create a material with the desired color
-                const textMaterial1 = new THREE.MeshBasicMaterial({ color: 0x000000 });
-                console.log({ textMaterial })
-                textMesh1 = new THREE.Mesh(textGeo, textMaterial1);
+                const frontTextMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+                frontTextMesh = new THREE.Mesh(textGeo, frontTextMaterial);
                 textGeo.computeBoundingBox();
 
-                textMesh1.position.x = -30;
-                textMesh1.position.y = -33;
-                textMesh1.position.z = 0;
+                frontTextMesh.position.x = -30;
+                frontTextMesh.position.y = -32.5;
+                frontTextMesh.position.z = 0;
+                group.add(frontTextMesh)
 
-                // create back side text mesh
-                textGeo = new TextGeometry(backText, {
+                textGeo = new TextGeometry(frontTexts.second, {
 
                     font: font,
 
-                    size: 2,
+                    size: 2.4,
+                    height: 2.1,
+
+                    bevelThickness: 2,
+
+                });
+
+                frontTextMesh1 = new THREE.Mesh(textGeo, frontTextMaterial);
+                textGeo.computeBoundingBox();
+
+                frontTextMesh1.position.x = -30;
+                frontTextMesh1.position.y = -36;
+                frontTextMesh1.position.z = 0;
+                group.add(frontTextMesh1)
+
+                textGeo = new TextGeometry(frontTexts.third, {
+
+                    font: font,
+
+                    size: 1.8,
+                    height: 2.1,
+
+                    bevelThickness: 2,
+
+                });
+
+                frontTextMesh2 = new THREE.Mesh(textGeo, frontTextMaterial);
+                textGeo.computeBoundingBox();
+
+                frontTextMesh2.position.x = -30;
+                frontTextMesh2.position.y = -39;
+                frontTextMesh2.position.z = 0;
+                group.add(frontTextMesh2)
+
+                textGeo = new TextGeometry(frontTexts.fourth, {
+
+                    font: font,
+
+                    size: 1.8,
+                    height: 2.1,
+
+                    bevelThickness: 2,
+
+                });
+
+                frontTextMesh3 = new THREE.Mesh(textGeo, frontTextMaterial);
+                textGeo.computeBoundingBox();
+
+                frontTextMesh3.position.x = -30;
+                frontTextMesh3.position.y = -42;
+                frontTextMesh3.position.z = 0;
+                group.add(frontTextMesh3)
+
+                textGeo = new TextGeometry(frontTexts.fifth, {
+
+                    font: font,
+
+                    size: 1.8,
+                    height: 2.1,
+
+                    bevelThickness: 2,
+
+                });
+
+                frontTextMesh4 = new THREE.Mesh(textGeo, frontTextMaterial);
+                textGeo.computeBoundingBox();
+
+                frontTextMesh4.position.x = -30;
+                frontTextMesh4.position.y = -45;
+                frontTextMesh4.position.z = 0;
+                group.add(frontTextMesh4)
+
+                // create back side text mesh
+                textGeo = new TextGeometry(backTexts.first, {
+
+                    font: font,
+
+                    size: 2.2,
                     height: 2.1,
 
                     bevelThickness: 2,
@@ -291,25 +379,89 @@ function GLBViewer({ src, frontText, backText, qrCodeValue }) {
 
                 const textMaterial2 = new THREE.MeshBasicMaterial({ color: 0x000000 });
 
-                textMesh2 = new THREE.Mesh(textGeo, textMaterial2);
+                backTextMesh = new THREE.Mesh(textGeo, textMaterial2);
 
-                textMesh2.rotation.x = Math.PI
-                textMesh2.rotation.y = Math.PI * 2
-                textMesh2.rotation.z = Math.PI
+                backTextMesh.rotation.x = Math.PI
+                backTextMesh.rotation.y = Math.PI * 2
+                backTextMesh.rotation.z = Math.PI
 
-                textMesh2.position.x = 30;
-                textMesh2.position.y = -33;
-                textMesh2.position.z = 0
+                backTextMesh.position.x = 30;
+                backTextMesh.position.y = -33;
+                backTextMesh.position.z = 0
+                group.add(backTextMesh)
 
-                group.add(textMesh1)
-                group.add(textMesh2)
+                textGeo = new TextGeometry(backTexts.second, {
+
+                    font: font,
+
+                    size: 1.3,
+                    height: 2.1,
+
+                    bevelThickness: 2,
+
+                });
+
+                backTextMesh1 = new THREE.Mesh(textGeo, textMaterial2);
+
+                backTextMesh1.rotation.x = Math.PI
+                backTextMesh1.rotation.y = Math.PI * 2
+                backTextMesh1.rotation.z = Math.PI
+
+                backTextMesh1.position.x = 30;
+                backTextMesh1.position.y = -35;
+                backTextMesh1.position.z = 0
+                group.add(backTextMesh1)
+
+                textGeo = new TextGeometry(backTexts.third, {
+
+                    font: font,
+
+                    size: 2.2,
+                    height: 2.1,
+
+                    bevelThickness: 2,
+
+                });
+
+                backTextMesh2 = new THREE.Mesh(textGeo, textMaterial2);
+
+                backTextMesh2.rotation.x = Math.PI
+                backTextMesh2.rotation.y = Math.PI * 2
+                backTextMesh2.rotation.z = Math.PI
+
+                backTextMesh2.position.x = 30;
+                backTextMesh2.position.y = -39;
+                backTextMesh2.position.z = 0
+                group.add(backTextMesh2)
+
+                textGeo = new TextGeometry(backTexts.fourth, {
+
+                    font: font,
+
+                    size: 1.8,
+                    height: 2.1,
+
+                    bevelThickness: 2,
+
+                });
+
+                backTextMesh3 = new THREE.Mesh(textGeo, textMaterial2);
+
+                backTextMesh3.rotation.x = Math.PI
+                backTextMesh3.rotation.y = Math.PI * 2
+                backTextMesh3.rotation.z = Math.PI
+
+                backTextMesh3.position.x = 30;
+                backTextMesh3.position.y = -42;
+                backTextMesh3.position.z = 0
+                group.add(backTextMesh3)
             })
 
         }
 
         function animate() {
             requestAnimationFrame(() => animate());
-            // group.rotateY(0.01)
+            group.rotateY(0.01)
 
             renderer.render(scene, camera)
             interactionManager.update();
@@ -336,27 +488,12 @@ function GLBViewer({ src, frontText, backText, qrCodeValue }) {
             //   loader.dispose();
             //   scene.dispose();
         };
-    }, [src, frontText, backText, qrCodeValue]);
+    }, [src, frontTexts, backTexts, qrCodeValue, imageUrl]);
 
     const onChangeHandle = (e) => {
-        console.log(e)
-        var userImage = e.target.files[0];
-
-        var userImageUrl = URL.createObjectURL(userImage);
-
-        var loader = new THREE.TextureLoader();
-        loader.setCrossOrigin("");
-        // var texture = loader.load(userImageURL);
-
-        var map = new THREE.TextureLoader().load(userImageUrl);
-        var mapMaterial = new THREE.MeshBasicMaterial({ map: map });
-        // find photo mesh
-        // photoMesh = mesh.find(item => item.name === "photo001")
-
-        mapMaterial.transparent = false;
-        mapMaterial.blending = THREE.NormalBlending
-        // replace material 
-        photoMesh.material = mapMaterial
+        const userImage = e.target.files[0];
+        const userImageUrl = URL.createObjectURL(userImage);
+        setImageUrl(userImageUrl)
     }
 
     return (

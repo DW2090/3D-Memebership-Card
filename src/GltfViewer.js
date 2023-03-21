@@ -49,7 +49,16 @@ function GLBViewer({ src, frontTexts, backTexts, logoTexts, qrCodeValue }) {
             30,
             5000
         );
-        camera.position.set(300, 0, 200);
+        camera.position.set(300, 0, 5);
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+        // Add some lights to the scene
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(10, 10, 10);
+        scene.add(directionalLight);
 
         const videoRef = document.getElementById('video');
         videoRef.src = 'models/lighting.mp4';
@@ -503,18 +512,6 @@ function GLBViewer({ src, frontTexts, backTexts, logoTexts, qrCodeValue }) {
             interactionManager.update();
         }
 
-        // Add some lights to the scene
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        scene.add(ambientLight);
-
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-        directionalLight.position.set(10, 10, 10);
-        scene.add(directionalLight);
-
-        // Set the camera position and look at the center of the scene
-        camera.position.z = 5;
-        camera.lookAt(new THREE.Vector3(0, 0, 0));
-
         new OrbitControls(camera, containerRef.current)
 
         // Clean up Three.js objects on unmount
@@ -524,7 +521,7 @@ function GLBViewer({ src, frontTexts, backTexts, logoTexts, qrCodeValue }) {
             //   loader.dispose();
             //   scene.dispose();
         };
-    }, [src, frontTexts, backTexts, qrCodeValue, imageUrl]);
+    }, [src, frontTexts, backTexts, qrCodeValue, logoTexts, imageUrl]);
 
     const onChangeHandle = (e) => {
         const userImage = e.target.files[0];

@@ -15,11 +15,15 @@ const backTexts = {
   fourth: "FOUNDER/LOVE COACH"
 }
 
+const logoTexts = {
+  love: "Love"
+}
+
 function App() {
   return (
     <div className="App">
 
-      <GLBViewer src="/models/nft_3.glb" frontTexts={frontTexts} backTexts={backTexts} qrCodeValue={3} />
+      <GLBViewer src="/models/nft_3.glb" frontTexts={frontTexts} backTexts={backTexts} logoTexts={logoTexts} qrCodeValue={3} />
     </div>
   );
 }

@@ -8,20 +8,20 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 import { InteractionManager } from 'three.interactive';
 
-function GLBViewer({ src, frontTexts, backTexts, qrCodeValue }) {
+function GLBViewer({ src, frontTexts, backTexts, logoTexts, qrCodeValue }) {
     const containerRef = useRef(null);
     const canvasRef = useRef(null);
     const [imageUrl, setImageUrl] = useState("sprite.jpg")
 
     const handleClick = () => {
         //ToDo: redirect token page
-        alert("Redirect to the token page!")
+        // alert("Redirect to the token page!")
     }
 
     useEffect(() => {
         if (!src) return;
 
-        let group, frontTextMesh, frontTextMesh1, frontTextMesh2, frontTextMesh3, frontTextMesh4, backTextMesh, backTextMesh1, backTextMesh2, backTextMesh3, textMaterial;
+        let group, frontTextMesh, frontTextMesh1, frontTextMesh2, frontTextMesh3, frontTextMesh4, backTextMesh, backTextMesh1, backTextMesh2, backTextMesh3, textMaterial, loveTextMesh;
 
         // Create a new Three.js renderer and attach it to the canvas element
         const renderer = new THREE.WebGLRenderer({
@@ -53,7 +53,7 @@ function GLBViewer({ src, frontTexts, backTexts, qrCodeValue }) {
 
         const videoRef = document.getElementById('video');
         videoRef.src = 'models/lighting.mp4';
-        var isPlaying = videoRef.currentTime > 0 && !videoRef.paused && !videoRef.ended
+        const isPlaying = videoRef.currentTime > 0 && !videoRef.paused && !videoRef.ended
             && videoRef.readyState > videoRef.HAVE_CURRENT_DATA;
         if (!isPlaying)
             videoRef.play();
@@ -82,8 +82,8 @@ function GLBViewer({ src, frontTexts, backTexts, qrCodeValue }) {
 
                 mesh.find(item => item.name === 'text001').visible = false;
                 // change avatar from a image
-                var map = new THREE.TextureLoader().load(imageUrl);
-                var mapMaterial = new THREE.MeshBasicMaterial({ map: map });
+                const map = new THREE.TextureLoader().load(imageUrl);
+                const mapMaterial = new THREE.MeshBasicMaterial({ map: map });
                 // find photo mesh
                 const photoMesh = mesh.find(item => item.name === "photo001")
 
@@ -92,9 +92,10 @@ function GLBViewer({ src, frontTexts, backTexts, qrCodeValue }) {
                 // replace material 
                 photoMesh.material = mapMaterial
 
-                var logoMesh = mesh.find(item => item.name === 'nft_frame001');
+                const logoMesh = mesh.find(item => item.name === 'nft_frame001');
 
                 mesh.find(item => item.name === 'qr001').visible = false
+                mesh.find(item => item.name === 'love_logo001').visible = false
                 createText();
 
                 interactionManager.add(logoMesh);
@@ -108,15 +109,15 @@ function GLBViewer({ src, frontTexts, backTexts, qrCodeValue }) {
             const model = gltf.scene.children[0]
             model.scale.set(10, 10, 10);
 
-            var box = new THREE.Box3().setFromObject(model)
+            const box = new THREE.Box3().setFromObject(model)
 
             const vector = new THREE.Vector3();
             box.getCenter(vector);
             model.position.set(-vector.x, -vector.y, -vector.z)
             group = new THREE.Group();
             scene.add(group);
-            // interactionManager.update();
-            group.rotation.y = Math.PI / 2
+            // front scen at the first loading
+            group.rotation.y = - Math.PI / 2
             group.add(model)
             animate(model)
 
@@ -175,7 +176,6 @@ function GLBViewer({ src, frontTexts, backTexts, qrCodeValue }) {
             loader.load(
                 '/models/qr2-1.svg', function (data) {
                     const paths = data.paths;
-                    console.log({ data })
                     const qrGroup1 = new THREE.Group();
 
                     for (let i = 0; i < paths.length; i++) {
@@ -215,7 +215,6 @@ function GLBViewer({ src, frontTexts, backTexts, qrCodeValue }) {
             // load qr code svg resource;
             loader.load(
                 `http://localhost:4000/api/qrcode/${qrCodeValue}`, function (data) {
-                    console.log({ data })
                     const paths = data.paths;
 
                     const qrGroup = new THREE.Group();
@@ -266,6 +265,7 @@ function GLBViewer({ src, frontTexts, backTexts, qrCodeValue }) {
             group.remove(backTextMesh1)
             group.remove(backTextMesh2)
             group.remove(backTextMesh3)
+            group.remove(loveTextMesh)
             const loader = new FontLoader();
             loader.load('fonts/optimer_bold.typeface.json', function (font) {
                 let textGeo = new TextGeometry(frontTexts.first, {
@@ -455,6 +455,42 @@ function GLBViewer({ src, frontTexts, backTexts, qrCodeValue }) {
                 backTextMesh3.position.y = -42;
                 backTextMesh3.position.z = 0
                 group.add(backTextMesh3)
+            })
+
+            loader.load('fonts/Sensations and Qualities_Regular.json', function (font) {
+                let textGeo = new TextGeometry(logoTexts.love, {
+
+                    font: font,
+
+                    size: 20,
+                    height: 1.5,
+
+                    bevelThickness: 2,
+
+                });
+
+                // Create a material with the desired color
+                const logoTextMaterial = new THREE.MeshPhongMaterial({ color: '#a6a060', shininess: 150 });
+                loveTextMesh = new THREE.Mesh(textGeo, logoTextMaterial);
+
+                loveTextMesh.rotation.x = Math.PI
+                loveTextMesh.rotation.y = Math.PI * 2
+                loveTextMesh.rotation.z = Math.PI
+
+                // Compute the bounding box of the text geometry
+                const boundingBox = new THREE.Box3().setFromObject(loveTextMesh);
+
+                // Calculate the center of the bounding box
+                const centerX = (boundingBox.max.x - boundingBox.min.x) / 2;
+                const centerY = (boundingBox.max.y - boundingBox.min.y) / 2;
+                const centerZ = (boundingBox.max.z - boundingBox.min.z) / 2;
+
+                // Set the position of the mesh to the center of the bounding box
+                loveTextMesh.position.set(-centerX, -centerY, -centerZ);
+
+
+                loveTextMesh.position.set(16, 0, 0)
+                group.add(loveTextMesh)
             })
 
         }

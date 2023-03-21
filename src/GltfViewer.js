@@ -6,11 +6,12 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
+import { InteractionManager } from 'three.interactive';
 
 function GLBViewer({ src, frontText, backText, qrCodeValue }) {
     const containerRef = useRef(null);
     const canvasRef = useRef(null);
-
+    var photoMesh
     useEffect(() => {
         if (!src) return;
 
@@ -46,27 +47,56 @@ function GLBViewer({ src, frontText, backText, qrCodeValue }) {
 
         const videoRef = document.getElementById('video');
         videoRef.src = 'models/lighting.mp4';
-        videoRef.play();
+        var isPlaying = videoRef.currentTime > 0 && !videoRef.paused && !videoRef.ended
+            && videoRef.readyState > videoRef.HAVE_CURRENT_DATA;
+        if (!isPlaying)
+            videoRef.play();
 
         const texture = new THREE.VideoTexture(videoRef);
 
         const material = new THREE.MeshMatcapMaterial({ map: texture });
 
+        const interactionManager = new InteractionManager(
+            renderer,
+            camera,
+            renderer.domElement
+        );
 
         // Load the glTF file using the GLTFLoader from Three.js
         const loader = new GLTFLoader();
         loader.load(src, (gltf) => {
             // Add the loaded model to the scene
             // const parrotPosition = new THREE.Vector3(0, 0, 0);
-
+            var allMesh;
             gltf.parser.getDependencies('mesh').then((mesh) => {
-                mesh.find(item => item.name === "video_back_1").material = material
-                mesh.find(item => item.name === "video_front_1").material = material
+                allMesh = mesh
+                console.log(mesh.map(item => item.name))
+                mesh.find(item => item.name === "video_back001").material = material
+                mesh.find(item => item.name === "video_front001").material = material
                 // material.opa
-                textMaterial = mesh.find(item => item.name === "qr_1").material;
-                mesh[7].visible = false;
-                mesh.find(item => item.name === 'qr_1').visible = false
+                textMaterial = mesh.find(item => item.name === "qr001").material.clone();
+
+                mesh.find(item => item.name == 'text001').visible = false;
+                // change avatar from a image
+                var map = new THREE.TextureLoader().load("sprite.jpg");
+                var mapMaterial = new THREE.MeshBasicMaterial({ map: map });
+                // find photo mesh
+                photoMesh = mesh.find(item => item.name === "photo001")
+
+                mapMaterial.transparent = false;
+                mapMaterial.blending = THREE.NormalBlending
+                // replace material 
+                photoMesh.material = mapMaterial
+
+                var logoMesh = mesh.find(item => item.name === 'nft_frame001');
+
+                mesh.find(item => item.name === 'qr001').visible = false
                 createText();
+
+                interactionManager.add(logoMesh);
+
+                logoMesh.addEventListener('mousedown', (event) => { alert('test') })
+                // window.removeEventListener('click', onDocumentMouseDown, false)
             })
 
             const model = gltf.scene.children[0]
@@ -79,6 +109,7 @@ function GLBViewer({ src, frontText, backText, qrCodeValue }) {
             model.position.set(-vector.x, -vector.y, -vector.z)
             group = new THREE.Group();
             scene.add(group);
+            // interactionManager.update();
             // group.rotation.y = Math.PI / 2
             group.add(model)
             animate(model)
@@ -92,7 +123,8 @@ function GLBViewer({ src, frontText, backText, qrCodeValue }) {
 
             // load qr code svg resource;
             loader.load(
-                `http://localhost:4000/api/qrcode/${qrCodeValue}`, function (data) {
+                // `http://localhost:4000/api/qrcode/${qrCodeValue}`, function (data) {
+                `/models/qr1.svg`, function (data) {
                     console.log({ data })
                     const paths = data.paths;
 
@@ -277,9 +309,10 @@ function GLBViewer({ src, frontText, backText, qrCodeValue }) {
 
         function animate() {
             requestAnimationFrame(() => animate());
-            group.rotateY(0.01)
+            // group.rotateY(0.01)
 
             renderer.render(scene, camera)
+            interactionManager.update();
         }
 
         // Add some lights to the scene
@@ -299,15 +332,40 @@ function GLBViewer({ src, frontText, backText, qrCodeValue }) {
         // Clean up Three.js objects on unmount
         return () => {
             renderer.dispose();
+            // interactionManager.update();
             //   loader.dispose();
             //   scene.dispose();
         };
     }, [src, frontText, backText, qrCodeValue]);
 
+    const onChangeHandle = (e) => {
+        console.log(e)
+        var userImage = e.target.files[0];
+
+        var userImageUrl = URL.createObjectURL(userImage);
+
+        var loader = new THREE.TextureLoader();
+        loader.setCrossOrigin("");
+        // var texture = loader.load(userImageURL);
+
+        var map = new THREE.TextureLoader().load(userImageUrl);
+        var mapMaterial = new THREE.MeshBasicMaterial({ map: map });
+        // find photo mesh
+        // photoMesh = mesh.find(item => item.name === "photo001")
+
+        mapMaterial.transparent = false;
+        mapMaterial.blending = THREE.NormalBlending
+        // replace material 
+        photoMesh.material = mapMaterial
+    }
+
     return (
-        <div ref={containerRef} style={{ width: '100vw', height: '100vh' }}>
-            <canvas ref={canvasRef} />
-        </div>
+        <>
+            <input type={"file"} accept=".jpg,.png" onChange={onChangeHandle} />
+            <div ref={containerRef} style={{ width: '100vw', height: '100vh' }}>
+                <canvas ref={canvasRef} />
+            </div>
+        </>
     );
 }
 
